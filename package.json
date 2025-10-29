@@ -1,0 +1,15 @@
+{
+  "name": "file-manager-new",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node fileManager.js",
+    "dev": "npm run start -- --username=Mikhail",
+    "test:basic": "npm run start -- --username=Tester ls"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
