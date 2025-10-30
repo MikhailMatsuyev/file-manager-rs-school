@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node fileManager.js",
+    "start": "node fileManager.mjs",
     "dev": "npm run start -- --username=Mikhail",
     "test:basic": "npm run start -- --username=Tester ls"
   },
