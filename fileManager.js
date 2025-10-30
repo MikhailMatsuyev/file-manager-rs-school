@@ -1,3 +1,5 @@
+// https://github.com/AlreadyBored/nodejs-assignments/blob/main/assignments/file-manager/assignment.md
+
 // Обработка аргументов командной строки
 function parseCommandLineArgs() {
     const args = process.argv.slice(2);
