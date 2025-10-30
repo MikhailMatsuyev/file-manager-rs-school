@@ -155,8 +155,20 @@ function parseCommandLineArgs() {
 }
 
 async function handleNavigateUp() {
-    process.chdir('..');
-    console.log(`Current directory: ${process.cwd()}`);
+    const currentDir = process.cwd();
+
+    // Проверяем, не находимся ли мы уже в корневой директории
+    if (currentDir === path.parse(currentDir).root) {
+        console.log('You are already in the root directory');
+        return;
+    }
+
+    try {
+        process.chdir('..');
+        console.log(`Current directory: ${process.cwd()}`);
+    } catch (error) {
+        throw new Error('FS operation failed');
+    }
 }
 
 async function main() {
