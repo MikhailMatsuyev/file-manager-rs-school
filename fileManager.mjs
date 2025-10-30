@@ -4,6 +4,7 @@ import { pipeline } from 'stream/promises';
 import { createHash } from 'crypto';
 import { createBrotliCompress, createBrotliDecompress } from 'zlib';
 import { createInterface } from 'readline';
+import { homedir, EOL, arch, cpus, userInfo } from 'os';
 import path from 'path';
 import fs from 'fs';
 
@@ -171,6 +172,32 @@ async function handleNavigateUp() {
     }
 }
 
+async function handleOperatingSystemInfo(flag) {
+    switch (flag) {
+        case '--EOL':
+            console.log(JSON.stringify(EOL));
+            break;
+        case '--cpus':
+            const cpusInfo = cpus();
+            console.log(`Total CPUs: ${cpusInfo.length}`);
+            cpusInfo.forEach((cpu, index) => {
+                console.log(`CPU ${index + 1}: ${cpu.model} (${cpu.speed / 1000} GHz)`);
+            });
+            break;
+        case '--homedir':
+            console.log(homedir());
+            break;
+        case '--username':
+            console.log(userInfo().username);
+            break;
+        case '--architecture':
+            console.log(arch());
+            break;
+        default:
+            console.log('Invalid OS flag');
+    }
+}
+
 async function main() {
     const args = parseCommandLineArgs();
     console.log("==args===", args);
@@ -198,13 +225,13 @@ async function main() {
         const [command, ...params] = trimmedInput.split(' ');
 
         switch (command) {
-            case 'ls':
-                await withErrorHandling(handleListFiles, 'list files');
+            /**/ case 'ls':
+                await withErrorHandling(handleListFiles, 'list files'); // +
                 break;
-            case 'up':
-                await withErrorHandling(handleNavigateUp, 'navigate up');
+            /**/ case 'up':
+                await withErrorHandling(handleNavigateUp, 'navigate up'); // +
                 break;
-            case 'cd':
+             case 'cd':
                 if (params.length === 0) {
                     console.error('Path is required for cd command');
                 } else {
@@ -253,28 +280,28 @@ async function main() {
                     await withErrorHandling(() => handleRemoveFile(params[0]), 'remove file');
                 }
                 break;
-            case 'os':
+            /*+*/case 'os':
                 if (params.length === 0) {
                     console.error('Flag is required for os command');
                 } else {
                     await withErrorHandling(() => handleOperatingSystemInfo(params[0]), 'get OS info');
                 }
                 break;
-            case 'hash':
+            case 'hash': //+
                 if (params.length === 0) {
                     console.error('File path is required for hash command');
                 } else {
                     await withErrorHandling(() => handleCalculateHash(params[0]), 'calculate hash');
                 }
                 break;
-            case 'compress':
+            case 'compress': // + compress new_file.txt compressed_file.br
                 if (params.length < 2) {
                     console.error('Both source and destination are required for compress command');
                 } else {
                     await withErrorHandling(() => handleCompressFile(params[0], params[1]), 'compress file');
                 }
                 break;
-            case 'decompress':
+            case 'decompress': // + decompress compressed_file.br del.txt
                 if (params.length < 2) {
                     console.error('Both source and destination are required for decompress command');
                 } else {
