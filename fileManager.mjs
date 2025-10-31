@@ -23,12 +23,12 @@ async function handleListFiles() {
     try {
         const files = await fs.promises.readdir(process.cwd(), { withFileTypes: true });
 
-        // Создаем массив объектов с информацией о файлах и папках
+        // Создаем массив объектов с инфой о файлах и папках
         const fileList = files.map(file => ({
             Name: file.name,
             Type: file.isDirectory() ? 'directory' : 'file'
         }))
-            // Сортируем: сначала папки, потом файлы, все в алфавитном порядке
+            // Сортируем: сначала папки, потом файлы, все по алфавиту
             .sort((a, b) => {
                 // Сначала сравниваем по типу (папки идут первыми)
                 if (a.Type !== b.Type) {
@@ -38,7 +38,7 @@ async function handleListFiles() {
                 return a.Name.localeCompare(b.Name);
             });
 
-        // Выводим в виде таблицы для наглядности
+        // Выводим в виде таблицы
         console.table(fileList);
     } catch (error) {
         throw new Error('FS operation failed');
@@ -121,6 +121,13 @@ async function handleCalculateHash(filePath) {
     });
 }
 
+async function handleChangeDirectory(newPath) {
+    const targetPath = path.resolve(process.cwd(), newPath);
+    await fs.promises.access(targetPath);
+    process.chdir(targetPath);
+    console.log(`Current directory: ${process.cwd()}`);
+}
+
 async function handleReadFile(filePath) {
     const fullPath = path.resolve(process.cwd(), filePath);
 
@@ -140,6 +147,49 @@ async function handleReadFile(filePath) {
             reject(new Error('FS operation failed'));
         });
     });
+}
+
+async function handleCreateFile(fileName) {
+    const filePath = path.resolve(process.cwd(), fileName);
+    await fs.promises.writeFile(filePath, '');
+    console.log(`File ${fileName} was created`);
+}
+
+async function handleRenameFile(oldPath, newName) {
+    const fullOldPath = path.resolve(process.cwd(), oldPath);
+    const fullNewPath = path.resolve(process.cwd(), newName);
+
+    await fs.promises.access(fullOldPath);
+    await fs.promises.rename(fullOldPath, fullNewPath);
+    console.log(`File was renamed from ${oldPath} to ${newName}`);
+}
+
+async function handleCopyFile(source, destination) {
+    const fullSource = path.resolve(process.cwd(), source);
+    const fullDestination = path.resolve(process.cwd(), destination);
+
+    await fs.promises.access(fullSource);
+
+    const readStream = createReadStream(fullSource);
+    const writeStream = createWriteStream(fullDestination);
+
+    await pipeline(readStream, writeStream);
+    console.log(`File was copied from ${source} to ${destination}`);
+}
+
+async function handleMoveFile(source, destination) {
+    const fullSource = path.resolve(process.cwd(), source);
+    const fullDestination = path.resolve(process.cwd(), destination);
+
+    await fs.promises.access(fullSource);
+    await fs.promises.rename(fullSource, fullDestination);
+    console.log(`File was moved from ${source} to ${destination}`);
+}
+
+async function handleRemoveFile(filePath) {
+    const fullPath = path.resolve(process.cwd(), filePath);
+    await fs.promises.unlink(fullPath);
+    console.log(`File ${filePath} was deleted`);
 }
 
 // Обработка аргументов командной строки
@@ -196,6 +246,37 @@ async function handleOperatingSystemInfo(flag) {
         default:
             console.log('Invalid OS flag');
     }
+}
+
+// Функция для вывода справки по командам
+async function handleHelp() {
+    const commands = [
+        { command: 'ls', description: 'List files and directories in current directory', example: 'ls' },
+        { command: 'up', description: 'Navigate to parent directory', example: 'up' },
+        { command: 'cd <path>', description: 'Change current directory', example: 'cd ./folder' },
+        { command: 'cat <path>', description: 'Read file and print its content', example: 'cat file.txt' },
+        { command: 'add <filename>', description: 'Create new file', example: 'add newfile.txt' },
+        { command: 'rn <path> <newName>', description: 'Rename file or directory', example: 'rn old.txt new.txt' },
+        { command: 'cp <source> <destination>', description: 'Copy file', example: 'cp file.txt copy.txt' },
+        { command: 'mv <source> <destination>', description: 'Move file', example: 'mv file.txt ./folder/' },
+        { command: 'rm <path>', description: 'Remove file', example: 'rm file.txt' },
+        { command: 'os --<flag>', description: 'Get system information (--EOL, --cpus, --homedir, --username, --architecture)', example: 'os --cpus' },
+        { command: 'hash <path>', description: 'Calculate file hash (SHA256)', example: 'hash file.txt' },
+        { command: 'compress <source> <destination>', description: 'Compress file using Brotli', example: 'compress file.txt ./compressed/' },
+        { command: 'decompress <source> <destination>', description: 'Decompress Brotli compressed file', example: 'decompress file.txt.br ./decompressed/' },
+        { command: 'help', description: 'Show this help message', example: 'help' },
+        { command: 'exit', description: 'Exit file manager', example: 'exit' }
+    ];
+
+    console.log('\nAvailable commands:');
+    console.log('==================\n');
+
+    commands.forEach(cmd => {
+        console.log(`Command: ${cmd.command}`);
+        console.log(`Description: ${cmd.description}`);
+        console.log(`Example: ${cmd.example}`);
+        console.log('---');
+    });
 }
 
 async function main() {
@@ -308,6 +389,9 @@ async function main() {
                     await withErrorHandling(() => handleDecompressFile(params[0], params[1]), 'decompress file');
                 }
                 break;
+            case 'handleHelp':
+                await withErrorHandling(handleHelp, 'list commands'); // +
+                break;
             case '.exit':
             case 'exit':
                 console.log(`Thank you for using File Manager, ${username}, goodbye!`);
@@ -328,6 +412,6 @@ async function main() {
 
 // Запуск приложения
 main().catch(error => {
-    console.error('Fatal error:', error);
+    console.error('Error:', error);
     process.exit(1);
 });
